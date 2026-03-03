@@ -2,10 +2,13 @@ node {
     try { 
         stage('Build') { 
             sh '''
-            # This line finds any directory containing 'Password' and 'Protection'
-            TARGET_DIR=$(find . -maxdepth 1 -type d -name "*Password*Protection*" | head -n 1)
-            echo "Moving into: $TARGET_DIR"
-            cd "$TARGET_DIR"
+            echo "Locating source files..."
+            # Find the directory that contains the 'src' folder
+            SRC_PATH=$(find . -name "src" -type d | head -n 1)
+            BASE_DIR=$(dirname "$SRC_PATH")
+            
+            echo "Project root found at: $BASE_DIR"
+            cd "$BASE_DIR"
             
             mkdir -p build
             javac -d build src/*.java
@@ -15,8 +18,9 @@ node {
 
         stage('Test') {
             sh '''
-            TARGET_DIR=$(find . -maxdepth 1 -type d -name "*Password*Protection*" | head -n 1)
-            cd "$TARGET_DIR"
+            SRC_PATH=$(find . -name "src" -type d | head -n 1)
+            BASE_DIR=$(dirname "$SRC_PATH")
+            cd "$BASE_DIR"
             
             if [ ! -f junit-platform-console-standalone.jar ]; then
                 curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
@@ -30,8 +34,10 @@ node {
 
         stage('Deploy') {
             sh '''
-            TARGET_DIR=$(find . -maxdepth 1 -type d -name "*Password*Protection*" | head -n 1)
-            cd "$TARGET_DIR"
+            SRC_PATH=$(find . -name "src" -type d | head -n 1)
+            BASE_DIR=$(dirname "$SRC_PATH")
+            cd "$BASE_DIR"
+            
             jar cf FileEncrypter.jar -C build .
             echo "Artifact Created successfully"
             '''
