@@ -2,11 +2,11 @@ node {
     try { 
         stage('Build') { 
             sh '''
-            echo "Searching for project folder..."
-            # Using a wildcard * matches the folder even if there are hidden spaces
-            cd Password*Protection
+            # This line finds any directory containing 'Password' and 'Protection'
+            TARGET_DIR=$(find . -maxdepth 1 -type d -name "*Password*Protection*" | head -n 1)
+            echo "Moving into: $TARGET_DIR"
+            cd "$TARGET_DIR"
             
-            echo "Currently in: $(pwd)"
             mkdir -p build
             javac -d build src/*.java
             echo "Build successful"
@@ -15,26 +15,25 @@ node {
 
         stage('Test') {
             sh '''
-            cd Password*Protection
+            TARGET_DIR=$(find . -maxdepth 1 -type d -name "*Password*Protection*" | head -n 1)
+            cd "$TARGET_DIR"
             
             if [ ! -f junit-platform-console-standalone.jar ]; then
-                echo "Downloading JUnit..."
                 curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
             fi
             
             mkdir -p test-build
             javac -cp junit-platform-console-standalone.jar:build -d test-build test/*.java
-            
-            echo "Running tests..."
             java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
             '''
         }
 
         stage('Deploy') {
             sh '''
-            cd Password*Protection
+            TARGET_DIR=$(find . -maxdepth 1 -type d -name "*Password*Protection*" | head -n 1)
+            cd "$TARGET_DIR"
             jar cf FileEncrypter.jar -C build .
-            echo "Artifact Created: FileEncrypter.jar"
+            echo "Artifact Created successfully"
             '''
         }
     } catch (Exception e) {
