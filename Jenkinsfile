@@ -1,24 +1,24 @@
 node { 
     try { 
         stage('Checkout') {
-            # This ensures Jenkins actually pulls your code from GitHub first
+            // Use double slashes for comments outside of sh blocks
             checkout scm
         }
 
         stage('Build') { 
             sh '''
-            echo "Checking current directory:"
+            echo "Listing all files in workspace:"
             ls -R
             
-            # Find all java files and verify if any exist
+            # Inside sh blocks, # is the correct comment character
             find . -name "*.java" > sources.txt
             
             if [ ! -s sources.txt ]; then
-                echo "ERROR: No .java files found in workspace!"
+                echo "ERROR: No .java files found!"
                 exit 1
             fi
             
-            echo "Files found:"
+            echo "Files found for compilation:"
             cat sources.txt
             
             mkdir -p build
@@ -35,15 +35,20 @@ node {
             
             mkdir -p test-build
             find . -path "*/test/*.java" > test_sources.txt
-            javac -cp junit-platform-console-standalone.jar:build -d test-build @test_sources.txt
-            java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
+            
+            if [ -s test_sources.txt ]; then
+                javac -cp junit-platform-console-standalone.jar:build -d test-build @test_sources.txt
+                java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
+            else
+                echo "No tests found to run."
+            fi
             '''
         }
 
         stage('Deploy') {
             sh '''
             jar cf FileEncrypter.jar -C build .
-            echo "Success!"
+            echo "Artifact Created successfully"
             '''
         }
     } catch (Exception e) {
