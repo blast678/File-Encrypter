@@ -2,13 +2,11 @@ node {
     try { 
         stage('Build') { 
             sh '''
-            echo "Current Directory Content:"
-            ls -F
+            echo "Searching for project folder..."
+            # Using a wildcard * matches the folder even if there are hidden spaces
+            cd Password*Protection
             
-            # Use a wildcard to enter the folder to avoid space issues
-            cd "Password Protection"
-            
-            echo "Inside folder. Compiling..."
+            echo "Currently in: $(pwd)"
             mkdir -p build
             javac -d build src/*.java
             echo "Build successful"
@@ -17,7 +15,7 @@ node {
 
         stage('Test') {
             sh '''
-            cd "Password Protection"
+            cd Password*Protection
             
             if [ ! -f junit-platform-console-standalone.jar ]; then
                 echo "Downloading JUnit..."
@@ -34,7 +32,7 @@ node {
 
         stage('Deploy') {
             sh '''
-            cd "Password Protection"
+            cd Password*Protection
             jar cf FileEncrypter.jar -C build .
             echo "Artifact Created: FileEncrypter.jar"
             '''
