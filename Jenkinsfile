@@ -2,41 +2,44 @@ node {
     try { 
         stage('Build') { 
             sh '''
-            echo "Searching for Java files..."
-            # Find all .java files and save their paths to a file
+            echo "--- WSL-DOCKER PATH SYNC ---"
+            # Find all java files regardless of spaces in folder names
             find . -name "*.java" > sources.txt
             
-            echo "Files found:"
+            echo "Compiling the following files:"
             cat sources.txt
             
             mkdir -p build
-            # Compile using the list of files found
+            # Compile using the list file to avoid 'cd' errors
             javac -d build @sources.txt
-            echo "Build successful"
+            echo "Build successful!"
             '''
         }
 
         stage('Test') {
             sh '''
-            # Download JUnit to the root so we don't have to hunt for it
+            echo "--- DOWNLOADING JUNIT ---"
             if [ ! -f junit-platform-console-standalone.jar ]; then
                 curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
             fi
             
             mkdir -p test-build
-            # Find all test files
+            # Find tests specifically
             find . -path "*/test/*.java" > test_sources.txt
             
+            echo "Compiling tests..."
             javac -cp junit-platform-console-standalone.jar:build -d test-build @test_sources.txt
             
+            echo "Executing JUnit tests..."
             java -jar junit-platform-console-standalone.jar --class-path build:test-build --scan-class-path
             '''
         }
 
         stage('Deploy') {
             sh '''
+            echo "--- PACKAGING JAR ---"
             jar cf FileEncrypter.jar -C build .
-            echo "Artifact Created: FileEncrypter.jar"
+            echo "Success: FileEncrypter.jar is ready."
             '''
         }
     } catch (Exception e) {
